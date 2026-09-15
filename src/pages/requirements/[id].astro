@@ -1,0 +1,25 @@
+---
+import Base from '../../layouts/Base.astro';
+import RequirementPage from '../../components/RequirementPage.astro';
+// PLACEHOLDER IMPORT. Swap this single named import for the content collection
+// query once the data layer lands. Nothing else on this page depends on it.
+import { requirements } from '../../lib/sample-requirements';
+
+export function getStaticPaths() {
+  return requirements.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+
+const title = `${entry.id} ${entry.title}`;
+const description = `What assessors accepted, rejected, and never asked for under ${entry.id}, ${entry.title}, tagged to each of its ${entry.objectives.length} assessment objectives.`;
+---
+
+<Base title={title} description={description}>
+  <p class="eyebrow" slot="mast">
+    <b>NIST SP 800-171 Rev 2</b> · <span>Requirement {entry.id}</span> · <span>Family {entry.family}</span> ·
+    <span>{entry.objectives.length} objectives</span>
+  </p>
+
+  <RequirementPage entry={entry} />
+</Base>
