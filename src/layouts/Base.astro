@@ -1,5 +1,6 @@
 ---
 import '../styles/tokens.css';
+import Search from '../components/Search.astro';
 
 interface Props {
   title: string;
@@ -61,12 +62,7 @@ const fullTitle = isHome ? SITE_NAME : `${title} · ${SITE_NAME}`;
             </a>
           )}
 
-          <!--
-            SEARCH SLOT
-            A later step mounts the search control here, as the right-hand
-            item of .mast-row. It is a Svelte island; do not build it in this
-            layout. Keep this comment until that step replaces it.
-          -->
+          <Search />
         </div>
 
         <slot name="mast" />

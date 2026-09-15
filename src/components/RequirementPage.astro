@@ -35,8 +35,8 @@ const sources = entry.public_sources.map(splitSource);
 <article class="detail" aria-labelledby="req-title">
   <div class="d-top">
     <div>
-      <div class="d-id" aria-hidden="true">{entry.id}</div>
-      <h1 class="d-title" id="req-title">
+      <div class="d-id" aria-hidden="true" data-pagefind-weight="10">{entry.id}</div>
+      <h1 class="d-title" id="req-title" data-pagefind-weight="8" data-pagefind-meta="title">
         <span class="visually-hidden">{entry.id} </span>{entry.title}
       </h1>
     </div>
@@ -86,7 +86,7 @@ const sources = entry.public_sources.map(splitSource);
                 <li class="claim">
                   <Fragment set:html={c.text} />
                   {c.objectives.length > 0 && (
-                    <span class="ltrs">
+                    <span class="ltrs" data-pagefind-ignore>
                       {c.objectives.map((l) => (
                         <a class="ltr" href={objectiveHref(l)} aria-label={`Objective ${entry.id}[${l}]`}>{l}</a>
                       ))}

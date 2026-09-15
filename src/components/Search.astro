@@ -1,0 +1,353 @@
+---
+import { getCollection } from 'astro:content';
+
+/**
+ * Identifiers are looked up exactly, not searched.
+ *
+ * Pagefind splits "3.1.1" into the tokens 3, 1 and 1, which makes it
+ * indistinguishable from 3.1.10 and from the AC family page that lists every
+ * 3.1.x at once. Searching the id therefore ranked the one page the reader
+ * wanted below twenty that merely contain its digits.
+ *
+ * Fighting the tokenizer was the wrong fix. Someone typing a requirement
+ * number is doing a lookup, not a search, so the id is matched exactly against
+ * the ids that exist and offered as a direct jump above the results.
+ */
+const requirements = await getCollection('requirements');
+const index = Object.fromEntries(
+  requirements.map(({ data }) => [
+    data.id,
+    { title: data.title, letters: data.objectives.map((objective) => objective.letter) },
+  ]),
+);
+---
+
+<script is:inline set:html={`window.__dictionaryIndex = ${JSON.stringify(index)};`} />
+
+<!--
+/**
+ * Site search, built on Pagefind.
+ *
+ * Pagefind indexes the finished HTML at build time, so it covers whatever
+ * pages exist when the site is built and picks up new ones with no
+ * configuration. It needs no server and no third party account, which is the
+ * whole reason it was chosen: a reference site that outlives someone's
+ * attention should not depend on a subscription.
+ *
+ * The index lives in `dist/pagefind/` and therefore does not exist during
+ * `astro dev`. Everything here loads on demand and fails quietly rather than
+ * throwing into the console on every dev page load.
+ *
+ * A native `<dialog>` does the keyboard work: Escape closes it, focus is
+ * trapped inside it, and the rest of the page is inert while it is open. None
+ * of that is worth reimplementing.
+ */
+-->
+
+<button type="button" class="search-open" data-search-open aria-haspopup="dialog">
+  <span>Search</span>
+  <kbd>/</kbd>
+</button>
+
+<dialog class="search-dialog" data-search-dialog aria-label="Search the dictionary">
+  <div class="search-head">
+    <p>Search 110 requirements, 320 objectives and the glossary.</p>
+    <button type="button" class="search-close" data-search-close aria-label="Close search">Esc</button>
+  </div>
+  <div class="search-jump" data-search-jump hidden></div>
+  <div id="search" data-search-mount></div>
+</dialog>
+
+<script>
+  const openButton = document.querySelector<HTMLButtonElement>('[data-search-open]');
+  const dialog = document.querySelector<HTMLDialogElement>('[data-search-dialog]');
+  const closeButton = document.querySelector<HTMLButtonElement>('[data-search-close]');
+  const mount = document.querySelector<HTMLElement>('[data-search-mount]');
+  const jump = document.querySelector<HTMLElement>('[data-search-jump]');
+
+  let loaded = false;
+
+  type Entry = { title: string; letters: string[] };
+  const index: Record<string, Entry> =
+    (window as unknown as { __dictionaryIndex?: Record<string, Entry> }).__dictionaryIndex ?? {};
+
+  /**
+   * Resolve a typed identifier to the page it names.
+   *
+   * Accepts a requirement ("3.1.1") and an objective in any of the spellings a
+   * reader actually types: "3.1.1[c]", "3.1.1 c", "3.1.1c". Returns nothing
+   * when the id does not exist, so a typo offers no jump rather than a 404.
+   */
+  function resolve(query: string): { href: string; label: string } | null {
+    const match = query.trim().match(/^(3\.\d+\.\d+)\s*(?:\[\s*([a-z])\s*\]|\s+([a-z])|([a-z]))?$/i);
+    if (!match) return null;
+    const id = match[1];
+    const entry = index[id];
+    if (!entry) return null;
+    const letter = (match[2] || match[3] || match[4] || '').toLowerCase();
+    if (!letter) {
+      return { href: `/requirements/${id}/`, label: `${id} ${entry.title}` };
+    }
+    if (!entry.letters.includes(letter)) return null;
+    return { href: `/objectives/${id}-${letter}/`, label: `${id}[${letter}]` };
+  }
+
+  function renderJump(query: string) {
+    if (!jump) return;
+    const target = resolve(query);
+    if (!target) {
+      jump.hidden = true;
+      jump.innerHTML = '';
+      return;
+    }
+    jump.hidden = false;
+    jump.innerHTML = `<a href="${target.href}"><span>Go to</span> ${target.label}</a>`;
+  }
+
+  /**
+   * Load the Pagefind UI the first time it is actually wanted.
+   *
+   * Nothing about search is on the critical path for a reader who came to
+   * read one requirement page, so none of it is fetched until the dialog is
+   * opened for the first time.
+   */
+  async function load() {
+    if (loaded || !mount) return;
+    loaded = true;
+
+    const styles = document.createElement('link');
+    styles.rel = 'stylesheet';
+    styles.href = '/pagefind/pagefind-ui.css';
+    document.head.append(styles);
+
+    await new Promise<void>((resolve) => {
+      const script = document.createElement('script');
+      script.src = '/pagefind/pagefind-ui.js';
+      script.addEventListener('load', () => resolve());
+      // In dev there is no index, because Pagefind runs over the built output.
+      // Say so in the dialog rather than leaving an empty box.
+      script.addEventListener('error', () => {
+        mount.innerHTML =
+          '<p class="search-missing">The search index is built with the site. ' +
+          'Run <code>npm run build</code> and use <code>npm run preview</code> to try it.</p>';
+        resolve();
+      });
+      document.head.append(script);
+    });
+
+    const PagefindUI = (window as unknown as { PagefindUI?: new (o: unknown) => unknown })
+      .PagefindUI;
+    if (!PagefindUI) return;
+    new PagefindUI({
+      element: '#search',
+      showSubResults: true,
+      showImages: false,
+      excerptLength: 24,
+      resetStyles: false,
+    });
+
+    // Pagefind owns the input, so the exact-match offer listens to it rather
+    // than rendering its own second search box.
+    dialog
+      ?.querySelector<HTMLInputElement>('input[type="text"]')
+      ?.addEventListener('input', (event) => {
+        renderJump((event.target as HTMLInputElement).value);
+      });
+  }
+
+  function open() {
+    if (!dialog) return;
+    void load();
+    dialog.showModal();
+    // Put the caret where the reader expects it. The input only exists once
+    // Pagefind has mounted, so try again on the next frame.
+    requestAnimationFrame(() => {
+      dialog.querySelector<HTMLInputElement>('input[type="text"]')?.focus();
+    });
+  }
+
+  function reset() {
+    if (jump) {
+      jump.hidden = true;
+      jump.innerHTML = '';
+    }
+  }
+
+  openButton?.addEventListener('click', open);
+  dialog?.addEventListener('close', reset);
+  closeButton?.addEventListener('click', () => dialog?.close());
+
+  // Click outside the panel closes it. The dialog element is the backdrop.
+  dialog?.addEventListener('click', (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
+    const active = document.activeElement;
+    const typing =
+      active instanceof HTMLInputElement ||
+      active instanceof HTMLTextAreaElement ||
+      (active instanceof HTMLElement && active.isContentEditable);
+    if (typing || dialog?.open) return;
+    event.preventDefault();
+    open();
+  });
+</script>
+
+<style>
+  .search-open {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 7px 11px;
+    cursor: pointer;
+    transition-property: color, border-color;
+    transition-duration: 140ms;
+    transition-timing-function: ease;
+  }
+  .search-open:hover {
+    color: var(--ink);
+    border-color: var(--ink-2);
+  }
+  .search-open:focus-visible {
+    outline: 2px solid var(--steel);
+    outline-offset: 2px;
+  }
+  .search-open kbd {
+    font-family: var(--mono);
+    font-size: 10px;
+    line-height: 1;
+    color: var(--ink-2);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 3px 5px;
+  }
+
+  .search-dialog {
+    width: min(640px, calc(100vw - 32px));
+    max-height: min(720px, calc(100vh - 96px));
+    margin-inline: auto;
+    margin-top: max(56px, env(safe-area-inset-top, 0px));
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--panel);
+    color: var(--ink);
+    overflow: hidden;
+  }
+  .search-dialog::backdrop {
+    background: color-mix(in srgb, var(--ink) 38%, transparent);
+  }
+
+  .search-head {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--line-2);
+    background: var(--panel-2);
+  }
+  .search-head p {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .search-close {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 4px 8px;
+    cursor: pointer;
+    flex: none;
+  }
+  .search-close:hover {
+    color: var(--ink);
+  }
+  .search-close:focus-visible {
+    outline: 2px solid var(--steel);
+    outline-offset: 1px;
+  }
+
+  #search {
+    padding: 14px 16px 18px;
+    overflow-y: auto;
+    max-height: calc(min(720px, 100vh - 96px) - 52px);
+  }
+
+  .search-jump {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line-2);
+  }
+  .search-jump a {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration: none;
+    padding: 9px 11px;
+    border-radius: 7px;
+    background: var(--steel-bg);
+  }
+  .search-jump a span {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--steel);
+  }
+  .search-jump a:hover {
+    text-decoration: underline;
+  }
+  .search-jump a:focus-visible {
+    outline: 2px solid var(--steel);
+    outline-offset: 2px;
+  }
+
+  .search-missing {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  /* Pagefind ships its own design. Bend it to this site's tokens rather than
+     letting a second visual language in through the search box. */
+  #search {
+    --pagefind-ui-scale: 0.82;
+    --pagefind-ui-primary: var(--ink);
+    --pagefind-ui-text: var(--ink-2);
+    --pagefind-ui-background: var(--panel);
+    --pagefind-ui-border: var(--line);
+    --pagefind-ui-tag: var(--panel-2);
+    --pagefind-ui-border-width: 1px;
+    --pagefind-ui-border-radius: 8px;
+    --pagefind-ui-font: var(--sans);
+  }
+
+  @media (max-width: 480px) {
+    .search-open span {
+      display: none;
+    }
+  }
+</style>

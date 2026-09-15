@@ -23,9 +23,31 @@ const ROOT = resolve(import.meta.dirname, '..');
 const DIST = join(ROOT, 'dist');
 const CONTENT = join(ROOT, 'src/content/requirements');
 
+const GLOSSARY = join(ROOT, 'src/content/glossary.json');
+
 const EXPECTED_REQUIREMENTS = 110;
 const EXPECTED_FAMILIES = 14;
 const EXPECTED_OBJECTIVES = 320;
+const EXPECTED_TERMS = 27;
+
+/**
+ * Terms that describe how this project is built rather than what a CMMC term
+ * means. The sync withholds them by name and trims them out of the definitions
+ * it does publish. This is the assertion that both of those worked, made
+ * against the published bytes rather than against the code meant to do it.
+ */
+const WITHHELD_TERMS = [
+  'Fixture',
+  'Cold run',
+  'Seat',
+  'Operator',
+  'Engagement repo',
+  'Control file',
+  'Low confidence',
+  'Vault',
+  'Definition and enforcement pattern',
+  'Open items list',
+];
 
 /**
  * Strings that must not reach a published file, in any form.
@@ -162,6 +184,56 @@ async function checkObjectivePages() {
   );
 }
 
+async function checkGlossary() {
+  if (!(await exists(GLOSSARY))) {
+    // The glossary arrives with its own ticket. Absence is not yet a failure.
+    return;
+  }
+  const terms = JSON.parse(await readFile(GLOSSARY, 'utf-8'));
+  check(
+    terms.length === EXPECTED_TERMS,
+    GLOSSARY,
+    `publishes ${terms.length} terms, expected ${EXPECTED_TERMS}`,
+  );
+
+  const published = new Set(terms.map((entry) => entry.term));
+  for (const required of ['Requirement', 'Objective', 'CUI', 'POA&M', 'OPA', 'C3PAO']) {
+    check(published.has(required), GLOSSARY, `does not publish the term "${required}"`);
+  }
+
+  // A withheld term must be absent as a term AND absent from every definition,
+  // because the leak that actually happened was inside a definition body.
+  const body = terms
+    .map((entry) => `${entry.term} ${entry.definition} ${entry.avoid}`)
+    .join(' ')
+    .toLowerCase();
+  for (const withheld of WITHHELD_TERMS) {
+    check(!body.includes(withheld.toLowerCase()), GLOSSARY, `publishes the withheld term "${withheld}"`);
+  }
+
+  // The words not to use are the reason this page is worth publishing.
+  check(
+    terms.some((entry) => entry.avoid),
+    GLOSSARY,
+    'carries no "avoid" guidance on any term',
+  );
+
+  const page = join(DIST, 'glossary', 'index.html');
+  if (await exists(page)) {
+    const html = await readFile(page, 'utf-8');
+    for (const entry of terms) {
+      check(html.includes(entry.term), page, `does not render the term "${entry.term}"`);
+    }
+  }
+}
+
+async function checkSearchIndex() {
+  const index = join(DIST, 'pagefind', 'pagefind.js');
+  if (!(await exists(index))) return;
+  const fragments = join(DIST, 'pagefind', 'fragment');
+  check(await exists(fragments), fragments, 'the search index holds no page fragments');
+}
+
 async function checkHomepage() {
   const page = join(DIST, 'index.html');
   check(await exists(page), page, 'no homepage was built');
@@ -182,6 +254,8 @@ async function main() {
   await checkRequirementPages(ids);
   await checkFamilyPages();
   await checkObjectivePages();
+  await checkGlossary();
+  await checkSearchIndex();
 
   for (const line of failures) console.log(line);
   console.log(

@@ -157,6 +157,58 @@ a.ltr:hover{color:var(--ink);text-decoration:underline}
 .sources a{color:var(--steel)}
 .sources a:hover{color:var(--ink)}
 
+/* ---------- homepage grid: reading control, legend, 14 family rows, 110 cells ----------
+   Ported from the prototype. The island in src/components/Grid.svelte renders it.
+   Cells carry meaning by ink density and border, never by hue alone:
+     (plain)   solid ink, full strength
+     .mid      half strength
+     .hollow   no fill, dashed border. Reserved for low confidence.
+     .outline  no fill, solid border. The light end of the other two readings.
+     .split    half solid, half mid, on a diagonal. The two adjustable-point requirements. */
+.bar{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:flex-end;justify-content:space-between;
+  padding-block:20px 16px}
+.seg-label{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--muted);display:block;margin-bottom:7px}
+.seg{display:inline-flex;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:3px;gap:2px}
+.seg button{font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--muted);
+  background:none;border:0;border-radius:5px;padding:6px 13px;cursor:pointer;
+  transition-property:background-color,color;transition-duration:140ms;transition-timing-function:ease}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
+.seg button:focus-visible{outline:2px solid var(--steel);outline-offset:1px}
+.legend{display:flex;gap:6px 15px;flex-wrap:wrap;align-items:center;margin:0;padding:0;list-style:none;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--muted)}
+.legend li{display:inline-flex;gap:6px;align-items:center}
+.key{width:13px;height:13px;border-radius:3px;background:var(--ink);border:1.5px solid var(--ink);flex:none}
+.key.mid{opacity:.52}
+.key.hollow{background:transparent;border-style:dashed}
+.key.outline{background:transparent}
+.key.split{background:linear-gradient(135deg,var(--ink) 0 50%,color-mix(in srgb,var(--ink) 52%,var(--panel)) 50% 100%)}
+.grid-note{font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;color:var(--muted);margin:0 0 10px}
+
+.grid-panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 14px 14px}
+.fam{display:grid;grid-template-columns:34px 1fr;align-items:start;gap:12px;
+  padding-block:6px;border-bottom:1px solid var(--line-2)}
+.fam:last-child{border-bottom:0}
+.fam-k{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--muted);
+  padding-top:9px;letter-spacing:.04em;text-decoration:none;line-height:1.2;display:block}
+.fam-k:hover{color:var(--ink);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.cells{display:flex;flex-wrap:wrap;gap:4px;margin:0;padding:0;list-style:none}
+.cell{width:var(--cell);height:var(--cell);border-radius:5px;border:1.5px solid var(--ink);
+  font-family:var(--mono);font-size:9.5px;font-weight:500;padding:0;text-decoration:none;
+  display:flex;align-items:center;justify-content:center;color:var(--ground);background:var(--ink);
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+  transition-property:opacity,box-shadow,scale;transition-duration:140ms;transition-timing-function:ease}
+.cell:hover{opacity:.72;color:var(--ground)}
+.cell:active{scale:.96}
+.cell:focus-visible{outline:2px solid var(--steel);outline-offset:2px}
+.cell.mid{opacity:.52}
+.cell.mid:hover{opacity:.38}
+.cell.hollow,.cell.outline{background:transparent;color:var(--ink-2)}
+.cell.hollow{border-style:dashed}
+.cell.hollow:hover,.cell.outline:hover{color:var(--ink)}
+.cell.split{background:linear-gradient(135deg,var(--ink) 0 50%,color-mix(in srgb,var(--ink) 52%,var(--panel)) 50% 100%)}
+
 /* ---------- editorial prose ---------- */
 .prose{max-width:66ch;margin-top:8px}
 .prose h2{font-size:clamp(19px,2.4vw,24px);font-weight:600;letter-spacing:-.017em;line-height:1.2;
@@ -186,9 +238,13 @@ footer.site a:hover{color:var(--ink)}
   :root{--cell:27px}
   .stat{flex:1 1 44%}
   header.mast{padding-block:36px 24px}
+  .grid-panel{padding:6px 10px 12px}
+  .fam{grid-template-columns:28px 1fr;gap:9px}
+  .fam-k{font-size:10.5px}
 }
 .rise{animation:rise 260ms var(--ease) both}
 @keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  .cell:active{scale:1}
 }
