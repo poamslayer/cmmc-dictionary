@@ -1,6 +1,7 @@
 import { defineCollection } from 'astro:content';
 import { z } from 'astro/zod';
 import type { Loader } from 'astro/loaders';
+import { file } from 'astro/loaders';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseRequirement, SECTION_NAMES } from './lib/parse-requirement';
@@ -64,9 +65,29 @@ function requirementsLoader(dir: string): Loader {
   };
 }
 
+/**
+ * The glossary is generated too, from the same sync.
+ *
+ * `avoid` is the field worth having. It carries the words to stop using, which
+ * is the part of a CMMC glossary nobody else publishes.
+ */
+export const glossarySchema = z.object({
+  id: z.string().min(1),
+  term: z.string().min(1),
+  definition: z.string().min(1),
+  avoid: z.string(),
+});
+
+export type GlossaryTerm = z.infer<typeof glossarySchema>;
+
+const glossary = defineCollection({
+  loader: file('./src/content/glossary.json'),
+  schema: glossarySchema,
+});
+
 const requirements = defineCollection({
   loader: requirementsLoader('./src/content/requirements'),
   schema: requirementSchema,
 });
 
-export const collections = { requirements };
+export const collections = { requirements, glossary };

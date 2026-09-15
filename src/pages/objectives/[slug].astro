@@ -1,0 +1,196 @@
+---
+/**
+ * One page per assessment objective. There are 320 of them.
+ *
+ * This is the part of the site that exists nowhere else. "What satisfies
+ * 3.1.1[c]" is a question with 320 variants and no good public answer, and the
+ * corpus can answer it because every claim already carries the objective
+ * letters it bears on. These pages assemble from tagging that was written for
+ * a different reason.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { SECTION_NAMES } from '../../lib/parse-requirement';
+import type { Requirement } from '../../content.config';
+
+const TONES: Record<string, string> = {
+  Sufficient: 'moss',
+  Insufficient: 'oxblood',
+  'Over-engineering': 'brass',
+  'Edge cases': 'steel',
+  'Evidence examples': 'ink',
+};
+
+export async function getStaticPaths() {
+  const requirements = await getCollection('requirements');
+  return requirements.flatMap(({ data }) =>
+    data.objectives.map((objective) => ({
+      params: { slug: `${data.id}-${objective.letter}` },
+      props: { requirement: data, objective },
+    })),
+  );
+}
+
+interface Props {
+  requirement: Requirement;
+  objective: { letter: string; text: string };
+}
+
+const { requirement, objective } = Astro.props as Props;
+const { letter } = objective;
+const label = `${requirement.id}[${letter}]`;
+
+// Gather this objective's claims from all five sections at once. A reader
+// asking what satisfies one objective does not care which section a claim was
+// filed under, but the section is what tells them whether it is a thing to do
+// or a thing to avoid, so it is kept as the grouping.
+const groups = SECTION_NAMES.map((name) => ({
+  name,
+  tone: TONES[name],
+  claims: requirement.sections[name].filter((claim) => claim.objectives.includes(letter)),
+})).filter((group) => group.claims.length > 0);
+
+const total = groups.reduce((sum, group) => sum + group.claims.length, 0);
+
+// Claims that bear on the requirement as a whole rather than on any one
+// objective. They are on the requirement page and on no objective page, so a
+// reader who lands here from a search should be told they exist.
+const untagged = SECTION_NAMES.reduce(
+  (sum, name) => sum + requirement.sections[name].filter((c) => c.objectives.length === 0).length,
+  0,
+);
+
+const description =
+  total > 0
+    ? `${total} recorded positions on what satisfies assessment objective ${label}, drawn from what assessors have accepted, rejected and treated as over-engineering.`
+    : `Assessment objective ${label} of NIST SP 800-171 Rev 2 requirement ${requirement.id}, ${requirement.title}.`;
+---
+
+<Base title={`${label} ${requirement.title}`} description={description}>
+  <p class="eyebrow" slot="mast">
+    <b>NIST SP 800-171A</b> · <span>Assessment objective</span> ·
+    <span>Requirement {requirement.id}</span> · <span>Family {requirement.family}</span>
+  </p>
+
+  <article class="detail" aria-labelledby="obj-title">
+    <div class="d-top">
+      <div>
+        <div class="d-id" aria-hidden="true" data-pagefind-weight="10">{label}</div>
+        <h1 class="d-title" id="obj-title" data-pagefind-meta="title">
+          <span class="visually-hidden">{label} </span>{objective.text}
+        </h1>
+      </div>
+      <ul class="chips" aria-label="Objective facts">
+        <li class="chip">{requirement.family}</li>
+        <li class:list={['chip', requirement.confidence === 'low' ? 'warn' : '']}>
+          {requirement.confidence} confidence
+        </li>
+      </ul>
+    </div>
+
+    <p class="obj-parent">
+      One of {requirement.objectives.length} objectives under{' '}
+      <a href={`/requirements/${requirement.id}/`}>{requirement.id} {requirement.title}</a>. A
+      requirement is MET only when every applicable objective is MET.
+    </p>
+
+    <h2 class="d-sub">What bears on {label}</h2>
+
+    {
+      total === 0 ? (
+        <div class="empty">
+          <b>Nothing tagged {label}</b>
+          No claim in the corpus is tagged to this objective. That is not a judgement about the
+          objective, only about what the source material covered. The requirement page carries
+          everything recorded for {requirement.id}.
+        </div>
+      ) : (
+        <div class="secs">
+          {groups.map((group) => (
+            <section class:list={['sec', `tone-${group.tone}`]}>
+              <div class="sec-h">
+                <h3>{group.name}</h3>
+                <span class="sec-n">{group.claims.length}</span>
+              </div>
+              <div class="claims">
+                {group.claims.map((claim) => (
+                  <p class="claim" set:html={claim.text} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )
+    }
+
+    {
+      untagged > 0 && (
+        <p class="obj-note">
+          {untagged} further {untagged === 1 ? 'claim' : 'claims'} about {requirement.id}{' '}
+          {untagged === 1 ? 'is' : 'are'} recorded against the requirement as a whole rather than
+          against any one objective. They are on the{' '}
+          <a href={`/requirements/${requirement.id}/`}>requirement page</a>.
+        </p>
+      )
+    }
+
+    <h2 class="d-sub">The other objectives under {requirement.id}</h2>
+    <ul class="objs" data-pagefind-ignore>
+      {
+        requirement.objectives.map((other) => (
+          <li>
+            <a
+              class:list={['obj', other.letter === letter ? 'is-current' : '']}
+              href={`/objectives/${requirement.id}-${other.letter}/`}
+              aria-current={other.letter === letter ? 'page' : undefined}
+            >
+              <span class="ok-l">{other.letter}</span>
+              <span>{other.text}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </article>
+</Base>
+
+<style>
+  .obj-parent {
+    font-family: var(--serif);
+    font-size: clamp(15.5px, 1.9vw, 17.5px);
+    line-height: 1.6;
+    color: var(--ink-2);
+    max-width: 64ch;
+    margin: 22px 0 0;
+  }
+  .obj-parent a {
+    color: var(--ink);
+  }
+
+  .obj-note {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--muted);
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    padding: 14px 16px;
+    max-width: 62ch;
+    margin: 24px 0 0;
+  }
+  .obj-note a {
+    color: var(--ink-2);
+  }
+
+  .objs li {
+    list-style: none;
+  }
+  .objs {
+    padding: 0;
+    margin: 0;
+  }
+  .obj.is-current {
+    background: var(--panel-2);
+    color: var(--ink);
+  }
+</style>

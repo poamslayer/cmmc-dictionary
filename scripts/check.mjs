@@ -80,6 +80,16 @@ async function exists(path) {
   }
 }
 
+/** Undo the HTML escaping that stands between a rendered term and its source. */
+function decode(html) {
+  return html
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
 async function walk(dir) {
   const out = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -220,7 +230,9 @@ async function checkGlossary() {
 
   const page = join(DIST, 'glossary', 'index.html');
   if (await exists(page)) {
-    const html = await readFile(page, 'utf-8');
+    // Compare against decoded text. "POA&M" is correctly written "POA&amp;M"
+    // in the HTML, and a raw substring check would call that a missing term.
+    const html = decode(await readFile(page, 'utf-8'));
     for (const entry of terms) {
       check(html.includes(entry.term), page, `does not render the term "${entry.term}"`);
     }

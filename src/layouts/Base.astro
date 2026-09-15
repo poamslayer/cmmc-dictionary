@@ -73,9 +73,15 @@ const fullTitle = isHome ? SITE_NAME : `${title} · ${SITE_NAME}`;
       </main>
 
       <footer class="site">
-        Generated from a maintained corpus of NIST SP 800-171 Rev 2 assessment positions.
-        Where the source was thin, the page says so rather than padding.<br />
-        <a href={REPO} rel="noopener">Source and corrections on GitHub</a>
+        <nav aria-label="Site">
+          <a href="/">All 110 requirements</a>
+          <a href="/glossary/">Glossary</a>
+          <a href={REPO} rel="noopener">Source and corrections</a>
+        </nav>
+        <p>
+          Generated from a maintained corpus of NIST SP 800-171 Rev 2 assessment positions.
+          Where the source was thin, the page says so rather than padding.
+        </p>
       </footer>
     </div>
   </body>

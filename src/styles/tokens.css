@@ -248,3 +248,11 @@ footer.site a:hover{color:var(--ink)}
   *{animation-duration:.01ms!important;transition-duration:.01ms!important}
   .cell:active{scale:1}
 }
+
+/* ---------- footer nav ---------- */
+footer.site nav{display:flex;flex-wrap:wrap;gap:10px 22px;margin-bottom:12px}
+footer.site nav a{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-2);text-decoration:none}
+footer.site nav a:hover{color:var(--ink);text-decoration:underline}
+footer.site nav a:focus-visible{outline:2px solid var(--steel);outline-offset:3px;border-radius:3px}
+footer.site p{margin:0}
