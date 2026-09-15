@@ -1,0 +1,86 @@
+---
+import '../styles/tokens.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+
+const SITE_NAME = 'CMMC Dictionary';
+const SITE_ORIGIN = Astro.site ?? new URL('https://dictionary.poamslayer.com');
+const REPO = 'https://github.com/poamslayer/cmmc-dictionary';
+
+const isHome = Astro.url.pathname === '/';
+const canonical = new URL(Astro.url.pathname, SITE_ORIGIN).href;
+const fullTitle = isHome ? SITE_NAME : `${title} · ${SITE_NAME}`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
+    />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="mast">
+        <div class="mast-row">
+          {isHome ? (
+            <span class="brand" aria-current="page">
+              <span class="brand-by">poamslayer /</span>
+              <span class="brand-name">{SITE_NAME}</span>
+            </span>
+          ) : (
+            <a class="brand" href="/">
+              <span class="brand-by">poamslayer /</span>
+              <span class="brand-name">{SITE_NAME}</span>
+            </a>
+          )}
+
+          <!--
+            SEARCH SLOT
+            A later step mounts the search control here, as the right-hand
+            item of .mast-row. It is a Svelte island; do not build it in this
+            layout. Keep this comment until that step replaces it.
+          -->
+        </div>
+
+        <slot name="mast" />
+      </header>
+
+      <main id="main">
+        <slot />
+      </main>
+
+      <footer class="site">
+        Generated from a maintained corpus of NIST SP 800-171 Rev 2 assessment positions.
+        Where the source was thin, the page says so rather than padding.<br />
+        <a href={REPO} rel="noopener">Source and corrections on GitHub</a>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,142 @@
+/* CMMC Dictionary: shared tokens and primitives.
+   Ported from the prototype. Every page imports this through Base.astro.
+   Page-specific rules stay in the page; anything two pages share lives here. */
+
+/* ---------- tokens: light palette on bare :root ---------- */
+:root{
+  --ground:#F2F4F5; --panel:#FFFFFF; --panel-2:#FAFBFB;
+  --ink:#0E1519; --ink-2:#3A474E; --muted:#67757C; --line:#DCE2E5; --line-2:#E9EEF0;
+  --moss:#2E6A4E; --moss-bg:#E8F1EC;
+  --oxblood:#9C3A31; --oxblood-bg:#F7EAE8;
+  --brass:#8A6412; --brass-bg:#F6EFDE;
+  --steel:#3A5C8C; --steel-bg:#E8EEF7;
+  --sans:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --ease:cubic-bezier(0.23,1,0.32,1);
+  --cell:30px;
+  color-scheme:light;
+}
+
+/* ---------- tokens: dark palette, system preference unless the page opts out ---------- */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C1113; --panel:#141B1F; --panel-2:#101719;
+    --ink:#E6ECEF; --ink-2:#B4C1C7; --muted:#8A99A1; --line:#232D33; --line-2:#1B242A;
+    --moss:#6FB08C; --moss-bg:#16241D;
+    --oxblood:#D98276; --oxblood-bg:#271816;
+    --brass:#C9A24A; --brass-bg:#241D0F;
+    --steel:#8AACD8; --steel-bg:#151D29;
+    color-scheme:dark;
+  }
+}
+
+/* ---------- tokens: dark palette, explicit choice ---------- */
+:root[data-theme="dark"]{
+  --ground:#0C1113; --panel:#141B1F; --panel-2:#101719;
+  --ink:#E6ECEF; --ink-2:#B4C1C7; --muted:#8A99A1; --line:#232D33; --line-2:#1B242A;
+  --moss:#6FB08C; --moss-bg:#16241D;
+  --oxblood:#D98276; --oxblood-bg:#271816;
+  --brass:#C9A24A; --brass-bg:#241D0F;
+  --steel:#8AACD8; --steel-bg:#151D29;
+  color-scheme:dark;
+}
+
+/* ---------- base ---------- */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img,svg{max-width:100%;height:auto}
+a{color:var(--steel);text-decoration-thickness:1px;text-underline-offset:2px}
+a:hover{color:var(--ink)}
+:focus-visible{outline:2px solid var(--steel);outline-offset:2px}
+code,kbd,samp{font-family:var(--mono)}
+
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:0 72px}
+@media (max-width:400px){ .wrap{padding-inline:16px} }
+
+/* ---------- masthead ---------- */
+header.mast{padding-block:52px 30px;border-bottom:1px solid var(--line)}
+.mast-row{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:baseline;justify-content:space-between}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink);text-decoration:none;font-weight:600;display:inline-flex;gap:10px;align-items:baseline}
+.brand:hover{color:var(--ink)}
+.brand:hover .brand-name{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.brand .brand-by{color:var(--muted);font-weight:400;letter-spacing:.1em}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:30px}
+.eyebrow b{color:var(--ink-2);font-weight:500}
+.mast h1{font-size:clamp(38px,6vw,62px);line-height:1.02;letter-spacing:-.031em;font-weight:700;
+  margin:16px 0 0;text-wrap:balance;max-width:16ch}
+.thesis{font-family:var(--serif);font-size:clamp(16px,2vw,19px);line-height:1.6;color:var(--ink-2);
+  max-width:62ch;margin:18px 0 0}
+.thesis em{font-style:italic;color:var(--ink)}
+
+/* ---------- stat strip ---------- */
+.stats{display:flex;flex-wrap:wrap;gap:0;margin-top:30px;border:1px solid var(--line);
+  border-radius:8px;overflow:hidden;background:var(--panel);padding:0;list-style:none}
+.stat{flex:1 1 128px;padding:13px 16px;border-right:1px solid var(--line-2);margin:0}
+.stat:last-child{border-right:0}
+.stat .n{font-family:var(--mono);font-size:21px;font-weight:600;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;display:block;line-height:1.2}
+.stat .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- chips ---------- */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+  padding:5px 9px;border-radius:5px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;
+  display:inline-block}
+.chip.hot{border-color:transparent;background:var(--oxblood-bg);color:var(--oxblood)}
+.chip.warn{border-color:transparent;background:var(--brass-bg);color:var(--brass)}
+.chip.ok{border-color:transparent;background:var(--moss-bg);color:var(--moss)}
+
+/* ---------- quoted requirement text ---------- */
+blockquote{font-family:var(--serif);font-size:clamp(17px,2.3vw,21px);line-height:1.5;color:var(--ink);
+  margin:26px 0 0;padding-left:20px;border-left:2px solid var(--ink);max-width:64ch}
+
+/* ---------- section label with trailing rule ---------- */
+.d-sub{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin:32px 0 12px;display:flex;align-items:center;gap:10px;font-weight:400}
+.d-sub::after{content:"";flex:1;height:1px;background:var(--line-2)}
+
+/* ---------- designed empty state ---------- */
+.empty{font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--muted);
+  border:1px dashed var(--line);border-radius:8px;padding:15px 17px;max-width:60ch}
+.empty b{display:block;color:var(--ink-2);font-weight:600;margin-bottom:4px;letter-spacing:.03em}
+
+/* ---------- editorial prose ---------- */
+.prose{max-width:66ch;margin-top:8px}
+.prose h2{font-size:clamp(19px,2.4vw,24px);font-weight:600;letter-spacing:-.017em;line-height:1.2;
+  margin:40px 0 12px;text-wrap:balance}
+.prose p{font-family:var(--serif);font-size:clamp(16px,1.9vw,18px);line-height:1.62;color:var(--ink-2);margin:0 0 16px}
+.prose p strong{color:var(--ink);font-weight:600}
+.prose dl{margin:0 0 16px;padding:0}
+.prose dt{font-weight:600;color:var(--ink);margin-top:14px;font-size:15px;letter-spacing:-.005em}
+.prose dd{font-family:var(--serif);font-size:clamp(15.5px,1.8vw,17px);line-height:1.6;color:var(--ink-2);margin:3px 0 0}
+.prose .id{font-family:var(--mono);font-size:.9em;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* ---------- helpers ---------- */
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.serif{font-family:var(--serif)}
+.muted{color:var(--muted)}
+.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ---------- footer ---------- */
+footer.site{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:10.5px;line-height:1.85;color:var(--muted);letter-spacing:.03em}
+footer.site a{color:var(--ink-2)}
+footer.site a:hover{color:var(--ink)}
+
+/* ---------- motion and small screens ---------- */
+@media (max-width:640px){
+  :root{--cell:27px}
+  .stat{flex:1 1 44%}
+  header.mast{padding-block:36px 24px}
+}
+.rise{animation:rise 260ms var(--ease) both}
+@keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}

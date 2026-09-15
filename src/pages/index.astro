@@ -1,0 +1,79 @@
+---
+import Base from '../layouts/Base.astro';
+
+const stats = [
+  { n: '110', l: 'Requirements' },
+  { n: '14', l: 'Families' },
+  { n: '320', l: 'Objectives' },
+  { n: '1,731', l: 'Tagged claims' },
+  { n: '14', l: 'Marked low confidence' },
+];
+---
+
+<Base
+  title="CMMC Dictionary"
+  description="What assessors accepted, rejected, and never asked for, recorded for each of the 110 NIST SP 800-171 Rev 2 requirements and tagged to the assessment objective it bears on."
+>
+  <Fragment slot="mast">
+    <p class="eyebrow">
+      <b>NIST SP 800-171 Rev 2</b> · <span>CMMC Level 2</span> · <span>110 requirements · 320 objectives</span>
+    </p>
+    <h1>Where the bar actually is</h1>
+    <p class="thesis">
+      Every other reference tells you what the 110 requirements <em>say</em>. You can already read that.
+      This one records what assessors <em>accepted</em>, what they <em>rejected</em>, and what was money
+      nobody needed to spend, tagged to the individual assessment objective it bears on.
+    </p>
+    <ul class="stats" aria-label="Corpus size">
+      {stats.map(({ n, l }) => (
+        <li class="stat">
+          <span class="n">{n}</span>
+          <span class="l">{l}</span>
+        </li>
+      ))}
+    </ul>
+  </Fragment>
+
+  <section class="prose" aria-labelledby="how-to-read">
+    <h2 id="how-to-read">How a requirement page reads</h2>
+    <p>
+      Each of the 110 requirements has its own page, written as <span class="id">3.1.1</span> and so on.
+      The page quotes the requirement, lists its assessment objectives, and then records five things.
+    </p>
+    <dl>
+      <dt>Sufficient</dt>
+      <dd>Implementations an assessor has accepted as meeting the requirement. This is the bar.</dd>
+      <dt>Insufficient</dt>
+      <dd>Implementations an assessor has rejected, and the reason given. Most of these looked fine on paper.</dd>
+      <dt>Over-engineering</dt>
+      <dd>Work that was done and never asked for. Spending here does not raise the score.</dd>
+      <dt>Edge cases</dt>
+      <dd>Situations where the answer is still open, or where two assessors have read the same objective differently. Both readings are kept.</dd>
+      <dt>Evidence examples</dt>
+      <dd>Artifacts that have passed: the screenshot, export, or record an assessor accepted as proof.</dd>
+    </dl>
+    <p>
+      Every claim in those sections carries the letters of the objectives it bears on, so a claim about <span class="id">3.1.1</span> is tagged <span class="id">[a]</span>, <span class="id">[c]</span>, or whichever apply.
+      That tagging is what makes a page per objective possible.
+      The question "what satisfies <span class="id">3.1.1[c]</span>" has its own answer, separate from the requirement as a whole.
+    </p>
+
+    <h2 id="low-confidence">Why 14 requirements are marked low confidence</h2>
+    <p>
+      For 14 of the 110 requirements the source material was thin. Their pages still exist, but most of
+      the five sections say so plainly instead of restating the Assessment Guide to fill the space.
+      Each of those requirements is labeled <strong>low confidence</strong> on its page and in the grid.
+    </p>
+    <p>
+      Hiding them would make the corpus look more complete than it is. Publishing the gap tells you which
+      pages to trust less and which ones need a correction from someone who has sat through the assessment.
+    </p>
+  </section>
+
+  <!--
+    GRID PLACEHOLDER
+    The next step renders the 110-cell grid here: 14 family rows, one cell per
+    requirement, confidence shown as ink density. Nothing renders in this spot
+    until then. Do not add a stand-in box or notice.
+  -->
+</Base>
