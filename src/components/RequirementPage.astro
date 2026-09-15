@@ -1,0 +1,125 @@
+---
+import type { Requirement } from '../content.config';
+
+interface Props {
+  entry: Requirement;
+}
+
+const { entry } = Astro.props;
+
+// Section order and accent tone, as the prototype settled them.
+const SECTIONS: { name: keyof Requirement['sections']; tone: string }[] = [
+  { name: 'Sufficient', tone: 'moss' },
+  { name: 'Insufficient', tone: 'oxblood' },
+  { name: 'Over-engineering', tone: 'brass' },
+  { name: 'Edge cases', tone: 'steel' },
+  { name: 'Evidence examples', tone: 'ink' },
+];
+
+const objectiveHref = (letter: string) => `/objectives/${entry.id}-${letter}/`;
+const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+const pointsLabel = `${entry.points} pt${entry.points === '1' ? '' : 's'}`;
+const pointsTone = entry.points === '5' ? 'hot' : entry.points === '3' ? 'warn' : '';
+
+// "Label: https://url" splits on the last ": http" boundary. A string with no
+// URL renders as plain text rather than a broken link.
+function splitSource(s: string): { label: string; href: string | null } {
+  const at = s.lastIndexOf(': http');
+  if (at === -1) return { label: s, href: null };
+  return { label: s.slice(0, at), href: s.slice(at + 2).trim() };
+}
+const sources = entry.public_sources.map(splitSource);
+---
+
+<article class="detail" aria-labelledby="req-title">
+  <div class="d-top">
+    <div>
+      <div class="d-id" aria-hidden="true" data-pagefind-weight="10">{entry.id}</div>
+      <h1 class="d-title" id="req-title" data-pagefind-weight="8" data-pagefind-meta="title">
+        <span class="visually-hidden">{entry.id} </span>{entry.title}
+      </h1>
+    </div>
+    <ul class="chips" aria-label="Requirement facts">
+      <li class="chip">{entry.family}</li>
+      <li class:list={['chip', pointsTone]}>{pointsLabel}</li>
+      <li class:list={['chip', entry.poam_eligible ? 'ok' : 'hot']}>
+        {entry.poam_eligible ? 'POA&M-eligible' : 'Never POA&M-eligible'}
+      </li>
+      <li class:list={['chip', entry.confidence === 'low' ? 'warn' : '']}>{entry.confidence} confidence</li>
+    </ul>
+  </div>
+
+  <blockquote>{entry.requirement}</blockquote>
+
+  <h2 class="d-sub" id="objectives">Assessment objectives</h2>
+  <ul class="objs" aria-labelledby="objectives">
+    {entry.objectives.map((o) => (
+      <li>
+        <a class="obj" href={objectiveHref(o.letter)}>
+          <span class="ok-l" aria-hidden="true">{o.letter}</span>
+          <span><span class="visually-hidden">{entry.id}[{o.letter}] </span>{o.text}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+
+  <div class="secs">
+    {SECTIONS.map(({ name, tone }) => {
+      const claims = entry.sections[name];
+      const headingId = `sec-${slug(name)}`;
+      return (
+        <section class:list={['sec', `tone-${tone}`]} aria-labelledby={headingId}>
+          <div class="sec-h">
+            <h2 id={headingId}>{name}</h2>
+            <span class="sec-n">{claims.length}</span>
+          </div>
+          {claims.length === 0 ? (
+            <div class="empty">
+              <b>No documented position</b>
+              The source material did not cover this. Rather than pad it out with the Assessment Guide
+              restated, it stays empty and the requirement is marked low confidence.
+            </div>
+          ) : (
+            <ul class="claims">
+              {claims.map((c) => (
+                <li class="claim">
+                  <Fragment set:html={c.text} />
+                  {c.objectives.length > 0 && (
+                    <span class="ltrs" data-pagefind-ignore>
+                      {c.objectives.map((l) => (
+                        <a class="ltr" href={objectiveHref(l)} aria-label={`Objective ${entry.id}[${l}]`}>{l}</a>
+                      ))}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      );
+    })}
+  </div>
+
+  <h2 class="d-sub" id="related">Related requirements</h2>
+  {entry.related.length > 0 ? (
+    <ul class="rel" aria-labelledby="related">
+      {entry.related.map((id) => (
+        <li><a href={`/requirements/${id}/`}>{id}</a></li>
+      ))}
+    </ul>
+  ) : (
+    <span class="chip">None recorded</span>
+  )}
+
+  <h2 class="d-sub" id="sources">Public sources</h2>
+  {sources.length > 0 ? (
+    <ol class="sources" aria-labelledby="sources">
+      {sources.map(({ label, href }) => (
+        <li>{href ? <a href={href} rel="noopener">{label}</a> : label}</li>
+      ))}
+    </ol>
+  ) : (
+    <span class="chip">None recorded</span>
+  )}
+</article>

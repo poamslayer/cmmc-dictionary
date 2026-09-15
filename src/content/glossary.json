@@ -1,0 +1,164 @@
+[
+  {
+    "id": "requirement",
+    "term": "Requirement",
+    "definition": "One of the 110 NIST SP 800-171 Rev 2 security requirements, written `3.x.y` (for example `3.1.1`). The unit an SPRS score is computed over.",
+    "avoid": "control (the 800-53 word; use it only when quoting 800-53 or a crosswalk), practice (the CMMC 1.0 word)."
+  },
+  {
+    "id": "objective",
+    "term": "Objective",
+    "definition": "One of the 320 NIST SP 800-171A assessment objectives, written with the requirement and a bracketed letter, `3.1.1[a]`. The unit an assessor scores and the unit an SSP conformity statement covers. A requirement is MET only when every applicable objective is MET.",
+    "avoid": "sub-control, criterion."
+  },
+  {
+    "id": "family",
+    "term": "Family",
+    "definition": "One of the 14 groups of requirements (AC, AT, AU, CA, CM, IA, IR, MA, MP, PE, PS, RA, SC, SI).",
+    "avoid": ""
+  },
+  {
+    "id": "met-not-met-n-a",
+    "term": "MET / NOT MET / N/A",
+    "definition": "The three assessment findings from 32 CFR 170.24(b). MET means every applicable objective is satisfied by evidence in final form. NOT MET means at least one objective is not. N/A means the requirement or objective does not apply, with a justification a human wrote.",
+    "avoid": ""
+  },
+  {
+    "id": "cui",
+    "term": "CUI",
+    "definition": "Controlled Unclassified Information, defined in 32 CFR Part 2002. Information the Government owns, or that a contractor makes for the Government under a contract, where a law, regulation, or Government-wide policy calls for safeguarding. Ownership comes first: information the company owns is not CUI to the company.",
+    "avoid": ""
+  },
+  {
+    "id": "fci",
+    "term": "FCI",
+    "definition": "Federal Contract Information as defined in FAR 52.204-21. Not CUI. Drives Level 1 only.",
+    "avoid": ""
+  },
+  {
+    "id": "cti",
+    "term": "CTI",
+    "definition": "Controlled Technical Information, the CUI category most build-to-print work involves. Carries a Distribution Statement B through F, never A.",
+    "avoid": ""
+  },
+  {
+    "id": "derivative-cui",
+    "term": "Derivative CUI",
+    "definition": "A document the company generates that reproduces CUI content it does not own (a traveler with the customer's dimensions, an inspection report quoting the drawing). It inherits the source's status.",
+    "avoid": ""
+  },
+  {
+    "id": "cui-asset",
+    "term": "CUI Asset",
+    "definition": "An asset that processes, stores, or transmits CUI. Assessed against every Level 2 requirement. One of the five asset categories in the CMMC Level 2 Scoping Guide and 32 CFR 170.19(c).",
+    "avoid": ""
+  },
+  {
+    "id": "security-protection-asset-spa",
+    "term": "Security Protection Asset (SPA)",
+    "definition": "An asset whose job is protecting the scope: a firewall, an identity provider, endpoint detection, an RMM with admin reach, a log platform. Assessed only against the requirements its capability touches.",
+    "avoid": ""
+  },
+  {
+    "id": "contractor-risk-managed-asset-crma",
+    "term": "Contractor Risk Managed Asset (CRMA)",
+    "definition": "An asset that could touch CUI but is not meant to, and sits unseparated from CUI Assets. Documented in the inventory, SSP, and diagram; reviewed through the SSP, with limited checks if the documentation is weak.",
+    "avoid": ""
+  },
+  {
+    "id": "specialized-asset",
+    "term": "Specialized Asset",
+    "definition": "IoT, IIoT, operational technology, government furnished equipment, restricted information systems, and test equipment that can handle CUI but cannot be fully secured. Documented in the inventory, SSP, and diagram; managed under a risk-based policy; not assessed against the Level 2 requirements at Level 2.",
+    "avoid": ""
+  },
+  {
+    "id": "out-of-scope-asset",
+    "term": "Out-of-Scope Asset",
+    "definition": "An asset that cannot process, store, or transmit CUI, provides no security protection, and is physically or logically separated. The bar is \"cannot\", a technical inability, never a policy. Not assessed; the justification must be ready.",
+    "avoid": ""
+  },
+  {
+    "id": "scope",
+    "term": "Scope",
+    "definition": "The CMMC Assessment Scope: the set of assets and the categories assigned to them, recorded in the asset inventory and the network diagram.",
+    "avoid": "boundary as a synonym for the whole scope (the SSP's \"system boundary\" is one part of it)."
+  },
+  {
+    "id": "applicability",
+    "term": "Applicability",
+    "definition": "The per-asset question of which requirements bear on it, decided after scope. Every in-scope asset must address all 110; it need not implement all 110.",
+    "avoid": ""
+  },
+  {
+    "id": "esp",
+    "term": "ESP",
+    "definition": "External Service Provider, as defined in 32 CFR 170.4: an outside organization that processes, stores, or transmits CUI, or provides security protection, within the scope. MSPs, MSSPs, and SOC providers are ESPs.",
+    "avoid": ""
+  },
+  {
+    "id": "csp",
+    "term": "CSP",
+    "definition": "Cloud Service Provider, a type of ESP that offers cloud services. When a CSP holds CUI it needs a FedRAMP Moderate authorization, or equivalency under the DoD CIO memo. An ESP that is not a CSP does not face that bar.",
+    "avoid": ""
+  },
+  {
+    "id": "responsibility-matrix",
+    "term": "Responsibility matrix",
+    "definition": "The document that states, per requirement, what the company implements and what each ESP implements. Also called the customer responsibility matrix (CRM) or shared responsibility matrix.",
+    "avoid": "CRM on its own, because it collides with customer relationship management."
+  },
+  {
+    "id": "ssp",
+    "term": "SSP",
+    "definition": "System Security Plan, required by 3.12.4.",
+    "avoid": ""
+  },
+  {
+    "id": "conformity-statement",
+    "term": "Conformity statement",
+    "definition": "The sentence or short paragraph in an SSP file that says how one objective is satisfied. Company-wide statements are plain prose. Component-specific statements are written `[Component_Name]: statement`.",
+    "avoid": ""
+  },
+  {
+    "id": "poa-m",
+    "term": "POA&M",
+    "definition": "Plan of Action and Milestones. A requirement assessed NOT MET during an assessment, with milestones the company controls and a hard 180-day closeout from the Conditional CMMC Status Date (32 CFR 170.21). Only 1-point requirements and the 3-point 3.13.11 case are eligible, and six requirements are never eligible.",
+    "avoid": ""
+  },
+  {
+    "id": "opa",
+    "term": "OPA",
+    "definition": "Operational Plan of Action. A temporary deficiency that arises after the system was compliant, assessed MET under 32 CFR 170.24(b)(1)(ii). No milestones the company controls, no 180-day clock.",
+    "avoid": ""
+  },
+  {
+    "id": "enduring-exception",
+    "term": "Enduring exception",
+    "definition": "A permanent deviation described in the SSP with its mitigations, assessed MET under 32 CFR 170.24(b)(1)(i). Its home is the SSP; it never goes on a POA&M or an OPA.",
+    "avoid": ""
+  },
+  {
+    "id": "sprs-score",
+    "term": "SPRS score",
+    "definition": "The Level 2 score from 32 CFR 170.24(c)(2): 110 minus the point value of every NOT MET requirement, using the 5, 3, 1 table and the two adjustable requirements 3.5.3 and 3.13.11.",
+    "avoid": ""
+  },
+  {
+    "id": "significant-change",
+    "term": "Significant change",
+    "definition": "A change to a certified environment large enough to require a new assessment. The Affirming Official decides.",
+    "avoid": ""
+  },
+  {
+    "id": "affirming-official",
+    "term": "Affirming Official",
+    "definition": "The senior company official who signs the CMMC affirmation and owns the significant change decision.",
+    "avoid": ""
+  },
+  {
+    "id": "c3pao",
+    "term": "C3PAO",
+    "definition": "CMMC Third-Party Assessment Organization. Conducts Level 2 certification assessments.",
+    "avoid": ""
+  }
+]

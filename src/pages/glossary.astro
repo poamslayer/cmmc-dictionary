@@ -1,0 +1,177 @@
+---
+/**
+ * The glossary, and the words to stop using.
+ *
+ * A reader arriving from a DFARS clause does not yet have the vocabulary, and
+ * most of what they will read gets it wrong in a way that costs them later.
+ * Calling a requirement a "control" quietly imports NIST 800-53 thinking.
+ * Calling an objective a "sub-control" hides that a requirement is MET only
+ * when every one of its objectives is.
+ *
+ * So the `_Avoid_` lines are given their own treatment rather than a footnote.
+ * They are the part of this page that is not available anywhere else.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+
+const glossary = (await getCollection('glossary')).map(({ data }) => data);
+const requirements = new Set((await getCollection('requirements')).map(({ data }) => data.id));
+
+/**
+ * Link a requirement number in a definition to its page.
+ *
+ * Several definitions cite a requirement by number: the SSP is required by
+ * 3.12.4, and 3.13.11 is one of the two adjustable ones. A reader who does not
+ * know what 3.12.4 says should be one click from finding out. Regulation
+ * citations such as 32 CFR 170.21 are deliberately left alone, because this
+ * site does not host them.
+ */
+function render(text: string): string {
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return escaped
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\b(3\.\d+\.\d+)\b/g, (match, id) =>
+      requirements.has(id) ? `<a href="/requirements/${id}/">${id}</a>` : match,
+    );
+}
+
+const withAvoid = glossary.filter((entry) => entry.avoid).length;
+---
+
+<Base
+  title="Glossary"
+  description="The CMMC vocabulary a reader actually needs, and the words to stop using. Requirement not control, objective not sub-control, responsibility matrix not CRM."
+>
+  <p class="eyebrow" slot="mast">
+    <b>Glossary</b> · <span>{glossary.length} terms</span> ·
+    <span>{withAvoid} carry words to avoid</span>
+  </p>
+
+  <section class="gl-intro">
+    <h1>The words, and the words to stop using</h1>
+    <p>
+      Most of this vocabulary is used loosely in the industry, and the loose version costs money.
+      Calling a requirement a <em>control</em> imports NIST 800-53 thinking into a standard that
+      does not work that way. Calling an objective a <em>sub-control</em> hides the rule that
+      decides your score: a requirement is MET only when every applicable objective is MET.
+    </p>
+    <p>
+      So each term below carries its definition, and where one exists, the words to avoid. That
+      second part is the reason this page is here.
+    </p>
+  </section>
+
+  <dl class="gl">
+    {
+      glossary.map((entry) => (
+        <div class="gl-term" id={entry.id}>
+          <dt data-pagefind-weight="10">
+            <a href={`#${entry.id}`}>{entry.term}</a>
+          </dt>
+          <dd>
+            <p set:html={render(entry.definition)} />
+            {entry.avoid && (
+              <p class="gl-avoid">
+                <span>Do not say</span>
+                <span set:html={render(entry.avoid)} />
+              </p>
+            )}
+          </dd>
+        </div>
+      ))
+    }
+  </dl>
+</Base>
+
+<style>
+  .gl-intro {
+    max-width: 64ch;
+  }
+  .gl-intro h1 {
+    font-size: clamp(30px, 4.4vw, 44px);
+    line-height: 1.06;
+    letter-spacing: -0.028em;
+    font-weight: 700;
+    margin: 14px 0 0;
+    text-wrap: balance;
+  }
+  .gl-intro p {
+    font-family: var(--serif);
+    font-size: clamp(15.5px, 1.9vw, 17.5px);
+    line-height: 1.62;
+    color: var(--ink-2);
+    margin: 16px 0 0;
+  }
+  .gl-intro em {
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  .gl {
+    margin: 38px 0 0;
+    border-top: 1px solid var(--line);
+  }
+  .gl-term {
+    padding-block: 22px;
+    border-bottom: 1px solid var(--line-2);
+    scroll-margin-top: 24px;
+  }
+  .gl-term dt {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    margin-bottom: 7px;
+  }
+  .gl-term dt a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .gl-term dt a:hover {
+    text-decoration: underline;
+  }
+  .gl-term dt a:focus-visible {
+    outline: 2px solid var(--steel);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+  .gl-term dd {
+    margin: 0;
+  }
+  .gl-term dd p {
+    font-size: 14.5px;
+    line-height: 1.62;
+    color: var(--ink-2);
+    max-width: 68ch;
+    margin: 0;
+  }
+
+  /* The avoid line is the point of the page, so it reads as a rule rather
+     than as an aside. */
+  .gl-avoid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    align-items: baseline;
+    margin-top: 11px !important;
+    padding: 9px 13px;
+    border-radius: 7px;
+    background: var(--oxblood-bg);
+    color: var(--oxblood) !important;
+    max-width: 64ch;
+  }
+  .gl-avoid span:first-child {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    flex: none;
+  }
+  .gl-avoid span:last-child {
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+</style>

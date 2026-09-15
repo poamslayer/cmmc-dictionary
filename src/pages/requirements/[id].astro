@@ -1,0 +1,24 @@
+---
+import Base from '../../layouts/Base.astro';
+import RequirementPage from '../../components/RequirementPage.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const requirements = await getCollection('requirements');
+  return requirements.map(({ data }) => ({ params: { id: data.id }, props: { entry: data } }));
+}
+
+const { entry } = Astro.props;
+
+const title = `${entry.id} ${entry.title}`;
+const description = `What assessors accepted, rejected, and never asked for under ${entry.id}, ${entry.title}, tagged to each of its ${entry.objectives.length} assessment objectives.`;
+---
+
+<Base title={title} description={description}>
+  <p class="eyebrow" slot="mast">
+    <b>NIST SP 800-171 Rev 2</b> · <span>Requirement {entry.id}</span> · <span>Family {entry.family}</span> ·
+    <span>{entry.objectives.length} objectives</span>
+  </p>
+
+  <RequirementPage entry={entry} />
+</Base>

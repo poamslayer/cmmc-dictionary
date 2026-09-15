@@ -1,0 +1,107 @@
+---
+import Base from '../../layouts/Base.astro';
+import { families } from '../../lib/families';
+// PLACEHOLDER IMPORT. Swap this single named import for the content collection
+// query once the data layer lands. Nothing else on this page depends on it.
+import { gridMeta } from '../../lib/grid-meta';
+
+export function getStaticPaths() {
+  return families.map((family) => ({
+    params: { family: family.code.toLowerCase() },
+    props: { family, entries: gridMeta.filter((e) => e.family === family.code) },
+  }));
+}
+
+const { family, entries } = Astro.props;
+
+const objectives = entries.reduce((n, e) => n + e.objectives, 0);
+const low = entries.filter((e) => e.confidence === 'low');
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+// `points` is a string. It is compared, never sorted or summed.
+const pointsLabel = (p: string) => (p === '3 or 5' ? '3 or 5 pts' : `${p} pt${p === '1' ? '' : 's'}`);
+const pointsTone = (p: string) => (p === '5' ? 'hot' : p === '3' || p === '3 or 5' ? 'warn' : '');
+
+const title = `${family.code} ${family.name}`;
+const description = `The ${entries.length} requirements in the ${family.name} family (${family.number}) of NIST SP 800-171 Rev 2, with SPRS points, POA&M eligibility and corpus confidence for each.`;
+---
+
+<Base title={title} description={description}>
+  <p class="eyebrow" slot="mast">
+    <b>NIST SP 800-171 Rev 2</b> · <span>Family {family.code}</span> · <span>{family.number}</span> ·
+    <span>{plural(entries.length, 'requirement')} · {plural(objectives, 'objective')}</span>
+  </p>
+
+  <article class="detail" aria-labelledby="fam-title">
+    <div class="d-top">
+      <div>
+        <div class="d-id" aria-hidden="true">{family.code}</div>
+        <h1 class="d-title" id="fam-title">
+          <span class="visually-hidden">{family.code} </span>{family.name}
+        </h1>
+      </div>
+      <ul class="chips" aria-label="Family facts">
+        <li class="chip">{family.number}</li>
+        <li class="chip">{plural(entries.length, 'requirement')}</li>
+        <li class="chip">{plural(objectives, 'objective')}</li>
+        {low.length > 0 && <li class="chip warn">{low.length} low confidence</li>}
+      </ul>
+    </div>
+
+    {low.length > 0 && (
+      <p class="fam-note">
+        {low.length === 1
+          ? `One of the ${entries.length} requirements in this family is marked low confidence. Its page exists, but the source material behind it was thin, so most of its sections say so instead of restating the Assessment Guide.`
+          : `${low.length} of the ${entries.length} requirements in this family are marked low confidence. Their pages exist, but the source material behind them was thin, so most of their sections say so instead of restating the Assessment Guide.`}
+        {' '}Marked low: {low.map((e, i) => (
+          <>
+            <a href={`/requirements/${e.id}/`} class="mono">{e.id}</a>{i < low.length - 1 ? ', ' : '.'}
+          </>
+        ))}
+      </p>
+    )}
+
+    <h2 class="d-sub" id="reqs">Requirements</h2>
+    <ul class="req-list" aria-labelledby="reqs">
+      {entries.map((e) => (
+        <li>
+          <a class="req-row" href={`/requirements/${e.id}/`}>
+            <span class="req-id" aria-hidden="true">{e.id}</span>
+            <span class="req-body">
+              <span class="req-title"><span class="visually-hidden">{e.id} </span>{e.title}</span>
+              <span class="chips" aria-label="Facts">
+                <span class:list={['chip', pointsTone(e.points)]}>{pointsLabel(e.points)}</span>
+                <span class:list={['chip', e.poam_eligible ? 'ok' : 'hot']}>
+                  {e.poam_eligible ? 'POA&M-eligible' : 'Never POA&M-eligible'}
+                </span>
+                <span class:list={['chip', e.confidence === 'low' ? 'warn' : '']}>{e.confidence} confidence</span>
+                <span class="chip">{plural(e.objectives, 'objective')}</span>
+              </span>
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </article>
+</Base>
+
+<style>
+  .fam-note{font-family:var(--serif);font-size:clamp(15.5px,1.8vw,17px);line-height:1.6;color:var(--ink-2);
+    margin:22px 0 0;max-width:66ch}
+  .fam-note a{color:var(--steel)}
+  .fam-note a:hover{color:var(--ink)}
+  .req-list{display:flex;flex-direction:column;gap:3px;margin:0;padding:0;list-style:none}
+  .req-row{display:flex;gap:14px;align-items:flex-start;border-radius:7px;padding:10px 10px;
+    color:var(--ink-2);text-decoration:none;
+    transition-property:background-color,color;transition-duration:140ms;transition-timing-function:ease}
+  .req-row:hover{background:var(--panel-2);color:var(--ink)}
+  .req-row:focus-visible{outline:2px solid var(--steel);outline-offset:-2px}
+  .req-id{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;
+    flex:none;width:52px;padding-top:2px}
+  .req-body{display:flex;flex-direction:column;gap:7px;min-width:0}
+  .req-title{font-size:15px;font-weight:500;color:var(--ink);line-height:1.4;letter-spacing:-.005em}
+  @media (max-width:400px){
+    .req-row{gap:10px;padding-inline:6px}
+    .req-id{width:46px;font-size:12px}
+  }
+</style>
